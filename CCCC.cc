@@ -1,3 +1,6 @@
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <stdint.h>
 #include <math.h>
 #include <atomic>
@@ -116,11 +119,25 @@ std::vector<int> parseCores(const char* coreDesc) {
     }
     return cores;
 }
+
+void ensureDirectory(const char* dir) {
+    struct stat st = {0};
+
+    if (stat(dir, &st) == -1) {
+        mkdir(dir, 0700);
+    }
+}
+
 int main(int argc, const char** argv){
     // Read arguments
     if (argc < 2) {
-        printf("Usage: ./CCCC <cpu_range>\n");
+        printf("Usage: ./CCCC <cpu_range> [datadir]\n");
         return 1;
+    }
+    const char* datadir = NULL;
+    if (argc > 2) {
+        datadir = argv[2];
+        ensureDirectory(datadir);
     }
 
     std::vector<int> cores = parseCores(argv[1]);
@@ -135,6 +152,16 @@ int main(int argc, const char** argv){
             r.join();
             // Analyze data
             PerfUtils::Util::serialize();
+            // Currently writing the data in unsorted order so we can attempt
+            // to find trends in the time series.
+            if (datadir != NULL) {
+                char buf[1024];
+                sprintf(buf, "%s/Core%d_to_Core%d",datadir, cores[i], cores[k]);
+                FILE* fp = fopen(buf, "w");
+                for (int j = 0; j < NUM_RUNS; j++)
+                    fprintf(fp, "%lu\n", rawdata[j]);
+                fclose(fp);
+            }
             printStatistics(cores[i], cores[k], rawdata);
             free(rawdata);
             PerfUtils::Util::serialize();
