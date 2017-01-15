@@ -34,9 +34,9 @@
 
 using PerfUtils::Cycles;
 
-void recv(uint64_t coreId, std::atomic<uint64_t>* timestamp, uint64_t** output){
+void recv(uint64_t coreId, std::atomic<uint64_t>* timestamp,
+        uint64_t *cycleDifferences){
     PerfUtils::Util::pinThreadToCore(coreId);
-    uint64_t* cycleDifferences = (uint64_t*)malloc(NUM_RUNS*sizeof(uint64_t));
     uint64_t endTime;
 
     for (int i = 0; i < NUM_WARMUP; i++) {
@@ -49,7 +49,6 @@ void recv(uint64_t coreId, std::atomic<uint64_t>* timestamp, uint64_t** output){
         endTime = Cycles::rdtsc();
         cycleDifferences[i] = endTime - *timestamp;
     }
-    *output = cycleDifferences;
 }
 
 void send(uint64_t coreId, std::atomic<uint64_t>* timestamp) {
@@ -142,12 +141,12 @@ int main(int argc, const char** argv){
 
     std::vector<int> cores = parseCores(argv[1]);
     std::atomic<uint64_t> timestamp;
-    uint64_t *rawdata;
+    uint64_t* rawdata = (uint64_t*)malloc(NUM_RUNS*sizeof(uint64_t));
     for (int i = 0; i < cores.size(); i++) {
         for (int k = 0; k < cores.size(); k++) {
             if (cores[i] == cores[k]) continue;
             timestamp = 1;
-            std::thread r(recv, cores[k], &timestamp, &rawdata);
+            std::thread r(recv, cores[k], &timestamp, rawdata);
             send(cores[i], &timestamp);
             r.join();
             // Analyze data
@@ -163,8 +162,8 @@ int main(int argc, const char** argv){
                 fclose(fp);
             }
             printStatistics(cores[i], cores[k], rawdata);
-            free(rawdata);
             PerfUtils::Util::serialize();
         }
     }
+    free(rawdata);
 }
