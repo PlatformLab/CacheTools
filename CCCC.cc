@@ -3,6 +3,8 @@
 #include <atomic>
 #include <thread>
 #include <vector>
+#include <string>
+#include <sstream>
 #include "PerfUtils/Cycles.h"
 #include "PerfUtils/Util.h"
 
@@ -85,24 +87,48 @@ void printStatistics(int sender, int receiver, uint64_t* rawdata) {
             rawdata[NUM_RUNS / 2], rawdata[0],rawdata[NUM_RUNS-1]);
 }
 
-int main(int argc, char** argv){
+void split(const std::string &s, char delim, std::vector<std::string> &elems) {
+    std::stringstream ss;
+    ss.str(s);
+    std::string item;
+    while (std::getline(ss, item, delim)) {
+        elems.push_back(item);
+    }
+}
+std::vector<std::string> split(const std::string &s, char delim) {
+    std::vector<std::string> elems;
+    split(s, delim, elems);
+    return elems;
+}
+
+std::vector<int> parseCores(const char* coreDesc) {
+    std::vector<int> cores;
+    std::vector<std::string> ranges = split(coreDesc, ',');
+    for (int i = 0; i < ranges.size(); i++) {
+        if (ranges[i].find("-") == std::string::npos)
+            cores.push_back(atoi(ranges[i].c_str()));
+        else {
+            auto bounds = split(ranges[i], '-');
+            for (int k = atoi(bounds[0].c_str()); k <= atoi(bounds[1].c_str());
+                    k++)
+                cores.push_back(k);
+        }
+    }
+    return cores;
+}
+int main(int argc, const char** argv){
     // Read arguments
     if (argc < 2) {
-        // TODO: Read the cpuset of the current process and use that to figure
-        // out what range and cpus to run this experiment on.
-        printf("Please specify the CPU range!\n");
+        printf("Usage: ./CCCC <cpu_range>\n");
         return 1;
     }
 
-    std::vector<int> cores;
-    for (int i = 1; i < argc; i++)
-        cores.push_back(atoi(argv[i]));
-
+    std::vector<int> cores = parseCores(argv[1]);
     std::atomic<uint64_t> timestamp;
     uint64_t *rawdata;
     for (int i = 0; i < cores.size(); i++) {
         for (int k = 0; k < cores.size(); k++) {
-            if (i == k) continue;
+            if (cores[i] == cores[k]) continue;
             timestamp = 1;
             std::thread r(recv, cores[k], &timestamp, &rawdata);
             send(cores[i], &timestamp);
