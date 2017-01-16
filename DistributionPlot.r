@@ -19,9 +19,8 @@ library(docopt)
 
 
 addToPlot <- function(filename) {
-    numRows = 100000
-    data = read.csv(filename, nrows=numRows)
-    plot(1:numRows, data$X, main=basename(filename))
+    data = read.table(filename)
+    plot(data, main=tools::file_path_sans_ext(basename(filename)))
 }
 main <- function() {
     options = docopt(doc)
