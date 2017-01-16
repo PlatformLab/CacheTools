@@ -13,13 +13,15 @@ library(docopt)
 "Usage: DistributionPlot.r [-ho FILE] [--rcdf] [INPUT ...]
 
 -h --help                  show this
--o FILE, --output FILE     specify output file [default: ./DistributionPlots.pdf]
+-o FILE, --output FILE     specify output file [default: ./DPlots.pdf]
 -r --rcdf                  generate rcdfs instead of time series" -> doc
 
 
 
 addToPlot <- function(filename) {
-    print(filename)
+    numRows = 100000
+    data = read.csv(filename, nrows=numRows)
+    plot(1:numRows, data$X, main=basename(filename))
 }
 main <- function() {
     options = docopt(doc)
@@ -27,7 +29,7 @@ main <- function() {
     pdf(options$output);
     for (f in options$INPUT) {
         if (dir.exists(f)) {
-            for (sf in list.files(f)) {
+            for (sf in list.files(f, full.names=TRUE)) {
                 if (!dir.exists(sf)) {
                     addToPlot(sf)
                 }
