@@ -65,24 +65,6 @@ int compare(const void * a, const void * b)
     return  *(uint64_t*)a < *(uint64_t*)b ? -1 : 1;
 }
 
-void writeCDF(FILE* fp, uint64_t* rawdata, size_t count) {
-    int logNumSamples = (int) (log(count) / log(10));
-    fprintf(fp, "%8lu    %8.3f\n", 0UL, 0.0);
-    fprintf(fp, "%8lu    %8.3f\n", rawdata[0], 1.0 / count);
-    for (int i = 0; i <= logNumSamples - 2; i+=2) {
-        double fraction = (pow(10, i) - 1) / pow(10,i);
-        double interval = (1 - fraction) / 100;
-        for (int k = 0; k < 100; k++) {
-            fprintf(fp, "%8lu    %8.*f\n",
-                    rawdata[(size_t)(count * (fraction + k * interval))],
-                    logNumSamples,
-                    fraction + k * interval);
-        }
-    }
-    fprintf(fp, "%8lu    %8.*f\n", rawdata[count - 1], logNumSamples,
-            1.0);
-}
-
 void printStatistics(int sender, int receiver, uint64_t* rawdata,
         const char* datadir) {
     qsort(rawdata, NUM_RUNS, sizeof(uint64_t), compare);
@@ -107,12 +89,13 @@ void printStatistics(int sender, int receiver, uint64_t* rawdata,
     printf("%d,%lu,%f,%lu,%lu,%lu\n", NUM_RUNS, avg, stddev,
             rawdata[NUM_RUNS / 2], rawdata[0],rawdata[NUM_RUNS-1]);
 
-    // Output a cdf in gnuplot format.
+    // Dump the data out
     if (datadir != NULL) {
         char buf[1024];
-        sprintf(buf, "%s/Core%d_to_Core%d.cdf",datadir, sender, receiver);
+        sprintf(buf, "%s/Core%d_to_Core%d",datadir, sender, receiver);
         FILE* fp = fopen(buf, "w");
-        writeCDF(fp, rawdata, NUM_RUNS);
+        for (int i = 0; i < NUM_RUNS; i++)
+            fprintf(fp, "%lu\n", rawdata[i]);
         fclose(fp);
     }
 }
