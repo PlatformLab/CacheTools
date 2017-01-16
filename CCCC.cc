@@ -69,15 +69,15 @@ void writeCDF(FILE* fp, uint64_t* rawdata, size_t count) {
     int logNumSamples = (int) (log(count) / log(10));
     fprintf(fp, "%8lu    %8.3f\n", 0UL, 0.0);
     fprintf(fp, "%8lu    %8.3f\n", rawdata[0], 1.0 / count);
-    for (int i = 1; i < 100; i++)
-        fprintf(fp, "%8lu    %8.3f\n",
-                rawdata[(size_t) (count * i * 1.0 / 100)],
-                i * 1.0 / 100);
-    for (int i = 3; i <= logNumSamples; i++) {
+    for (int i = 0; i <= logNumSamples - 2; i+=2) {
         double fraction = (pow(10, i) - 1) / pow(10,i);
-        fprintf(fp, "%8lu    %8.*f\n", rawdata[(size_t)(count * fraction)],
-                logNumSamples,
-                fraction);
+        double interval = (1 - fraction) / 100;
+        for (int k = 0; k < 100; k++) {
+            fprintf(fp, "%8lu    %8.*f\n",
+                    rawdata[(size_t)(count * (fraction + k * interval))],
+                    logNumSamples,
+                    fraction + k * interval);
+        }
     }
     fprintf(fp, "%8lu    %8.*f\n", rawdata[count - 1], logNumSamples,
             1.0);
