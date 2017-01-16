@@ -13,11 +13,30 @@ library(docopt)
 "Usage: DistributionPlot.r [-ho FILE] [--rcdf] [INPUT ...]
 
 -h --help                  show this
--o FILE, --output FILE     specify output file [default: ./Rplots.pdf]
+-o FILE, --output FILE     specify output file [default: ./DistributionPlots.pdf]
 -r --rcdf                  generate rcdfs instead of time series" -> doc
 
-options = docopt(doc)
 
-for (f in options$INPUT) {
-    print(f);
+
+addToPlot <- function(filename) {
+    print(filename)
 }
+main <- function() {
+    options = docopt(doc)
+
+    pdf(options$output);
+    for (f in options$INPUT) {
+        if (dir.exists(f)) {
+            for (sf in list.files(f)) {
+                if (!dir.exists(sf)) {
+                    addToPlot(sf)
+                }
+            }
+        }
+        else if (file.exists(f)) {
+            addToPlot(f)
+        } # Otherwise, we ignore
+    }
+    dev.off();
+}
+main()
