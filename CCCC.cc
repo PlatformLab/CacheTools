@@ -65,8 +65,26 @@ int compare(const void * a, const void * b)
     return  *(uint64_t*)a < *(uint64_t*)b ? -1 : 1;
 }
 
-void printStatistics(int sender, int receiver, uint64_t* rawdata) {
-    printf("%d,%d,", sender, receiver);
+void writeCDF(FILE* fp, uint64_t* rawdata, size_t count) {
+    int logNumSamples = (int) (log(count) / log(10));
+    fprintf(fp, "%8lu    %8.3f\n", 0UL, 0.0);
+    fprintf(fp, "%8lu    %8.3f\n", rawdata[0], 1.0 / count);
+    for (int i = 1; i < 100; i++)
+        fprintf(fp, "%8lu    %8.3f\n",
+                rawdata[(size_t) (count * i * 1.0 / 100)],
+                i * 1.0 / 100);
+    for (int i = 3; i <= logNumSamples; i++) {
+        double fraction = (pow(10, i) - 1) / pow(10,i);
+        fprintf(fp, "%8lu    %8.*f\n", rawdata[(size_t)(count * fraction)],
+                logNumSamples,
+                fraction);
+    }
+    fprintf(fp, "%8lu    %8.*f\n", rawdata[count - 1], logNumSamples,
+            1.0);
+}
+
+void printStatistics(int sender, int receiver, uint64_t* rawdata,
+        const char* datadir) {
     qsort(rawdata, NUM_RUNS, sizeof(uint64_t), compare);
     uint64_t sum = 0;
     for (int i = 0; i < NUM_RUNS; i++)
@@ -85,8 +103,18 @@ void printStatistics(int sender, int receiver, uint64_t* rawdata) {
     stddev = sqrt(stddev);
 
     // count,avg,stddev,median,min,max
+    printf("%d,%d,", sender, receiver);
     printf("%d,%lu,%f,%lu,%lu,%lu\n", NUM_RUNS, avg, stddev,
             rawdata[NUM_RUNS / 2], rawdata[0],rawdata[NUM_RUNS-1]);
+
+    // Output a cdf in gnuplot format.
+    if (datadir != NULL) {
+        char buf[1024];
+        sprintf(buf, "%s/Core%d_to_Core%d.cdf",datadir, sender, receiver);
+        FILE* fp = fopen(buf, "w");
+        writeCDF(fp, rawdata, NUM_RUNS);
+        fclose(fp);
+    }
 }
 
 void split(const std::string &s, char delim, std::vector<std::string> &elems) {
@@ -151,17 +179,7 @@ int main(int argc, const char** argv){
             r.join();
             // Analyze data
             PerfUtils::Util::serialize();
-            // Currently writing the data in unsorted order so we can attempt
-            // to find trends in the time series.
-            if (datadir != NULL) {
-                char buf[1024];
-                sprintf(buf, "%s/Core%d_to_Core%d",datadir, cores[i], cores[k]);
-                FILE* fp = fopen(buf, "w");
-                for (int j = 0; j < NUM_RUNS; j++)
-                    fprintf(fp, "%lu\n", rawdata[j]);
-                fclose(fp);
-            }
-            printStatistics(cores[i], cores[k], rawdata);
+            printStatistics(cores[i], cores[k], rawdata, datadir);
             PerfUtils::Util::serialize();
         }
     }
