@@ -20,7 +20,8 @@ library(docopt)
 
 addToPlot <- function(filename) {
     data = read.table(filename)
-    plot(data, main=tools::file_path_sans_ext(basename(filename)))
+    plot(data[,1], 1-data[,2], main=tools::file_path_sans_ext(basename(filename)),
+         type="l", log="xy")
 }
 main <- function() {
     options = docopt(doc)
