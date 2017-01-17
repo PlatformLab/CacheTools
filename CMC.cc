@@ -8,6 +8,9 @@
 
 #define NUM_RUNS 1000000
 
+// Uncomment the following line to meausre only overheads
+//#define NULL_MEASURE
+
 using PerfUtils::Cycles;
 /**
  * Cache Miss Cost: This tool attempts to measure the cost of various levels of
@@ -48,7 +51,9 @@ int main(int argc, char** argv){
     uint8_t **cur = memory;
     for (int i = 0; i < NUM_RUNS; i++) {
         startTime = Cycles::rdtsc();
+        #ifndef NULL_MEASURE
         cur = (uint8_t**) *cur;
+        #endif
         delta = Cycles::rdtsc() - startTime;
         deltas[i] = delta;
     }
