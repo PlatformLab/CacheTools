@@ -1,6 +1,12 @@
 #!/bin/bash
 
-# Usage: ./Release cores.
+# Usage: ./ReleaseCores.sh
+
+if [[ $(id -u) -ne 0 ]]; then
+    echo "You must be root to run this script!"
+    exit
+fi
+
 
 # Restore all processes to the root cpuset
 cd /sys/fs/cgroup/cpuset

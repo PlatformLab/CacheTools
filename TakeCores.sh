@@ -2,6 +2,11 @@
 
 # Usage: ./TakeCores.sh <MyCores> <OtherCores> <my_pid>
 
+if [[ $(id -u) -ne 0 ]]; then
+    echo "You must be root to run this script!"
+    exit
+fi
+
 if [[ "$#" -lt 3 ]]; then
     echo "Usage: ./TakeCores.sh <MyCores> <OtherCores> <my_pid>"
     exit
