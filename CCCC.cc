@@ -13,20 +13,21 @@
 
 /**
  * This program attempts to measure unidirectional cross core communication
- * cost (CCCC) for all pairs of cores.
+ * cost (CCCC) for all pairs of cores passed on the command line.
  *
  * The following algorithm is used here.
- *    0. Sender pins itself to a core.
- *    2. Sender waits for the receiver to indicate readiness.
- *    1. Receiver starts in a different thread.
- *    3. Receiver pins itself to a core
- *    4. Receiver sets a flag to let the sender know that it is ready.
+ *    0. Receiver starts in a different thread.
+ *    1. Receiver pins itself to a core
+ *    2. Sender pins itself to a core.
+ *    3. Sender waits for the receiver to indicate readiness by clearing a
+ *       shared memory location.
+ *    4. Receiver clears the memory location to let the sender know that it is ready.
  *    5. Receiver starts polling on the shared memory location.
- *    6. The sender writes the Cycle counter to the shared memory location, and
- *       then waits for the receiver to signal that it has finished.
+ *    6. Sender writes the Cycle counter to the shared memory location, and
+ *       then waits for the receiver to signal that it has finished processing.
  *    7. As soon as receiver reads the timestamp, it will read the timestamp
  *       and compute and store a difference. It will then clear the flag to
- *       signal to the sender that it is done.
+ *       signal to the sender that it is ready for the next sending.
  */
 
 #define NUM_WARMUP 10000
