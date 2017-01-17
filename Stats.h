@@ -8,6 +8,7 @@ int compare(const void * a, const void * b)
 
 void printStatistics(const char* label, uint64_t* rawdata, size_t count,
         const char* datadir) {
+    static bool headerPrinted = false;
     qsort(rawdata, count, sizeof(uint64_t), compare);
     uint64_t sum = 0;
     for (int i = 0; i < count; i++)
@@ -26,6 +27,10 @@ void printStatistics(const char* label, uint64_t* rawdata, size_t count,
     stddev = sqrt(stddev);
 
     // count,avg,stddev,median,min,max
+    if (!headerPrinted) {
+        puts("Benchmark,Count,Avg,StdDev,Median,Min,Max");
+        headerPrinted = true;
+    }
     printf("%s,%zu,%lu,%f,%lu,%lu,%lu\n", label, count, avg, stddev,
             rawdata[count / 2], rawdata[0],rawdata[count-1]);
 

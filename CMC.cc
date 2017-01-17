@@ -58,7 +58,6 @@ int main(int argc, char** argv){
         deltas[i] = delta;
     }
     free(memory);
-    puts("Benchmark,Count,Avg,StdDev,Median,Min,Max");
     printStatistics("Cache Statistics", deltas, NUM_RUNS, NULL);
     printHistogram(deltas, NUM_RUNS, 0, 300, 10);
 
