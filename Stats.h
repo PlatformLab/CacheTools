@@ -1,3 +1,5 @@
+#include <math.h>
+
 int compare(const void * a, const void * b)
 {
     if (*(uint64_t*)a == *(uint64_t*)b) return 0;
@@ -38,3 +40,26 @@ void printStatistics(const char* label, uint64_t* rawdata, size_t count,
     }
 }
 
+void printHistogram(uint64_t* rawdata, size_t count, uint64_t lowerbound, uint64_t upperbound, uint64_t step) {
+    size_t numBuckets = (upperbound - lowerbound) / step + 1;
+    uint64_t *buckets = (uint64_t *) calloc(numBuckets, sizeof(uint64_t));
+    for (int i = 0; i < count; i++) {
+        bool foundBucket = false;
+        for (uint64_t k = lowerbound; k < upperbound; k += step) {
+            if (rawdata[i] < k + step) {
+                buckets[(k - lowerbound) / step]++;
+                foundBucket = true;
+                break;
+            }
+        }
+        if (!foundBucket) {
+            buckets[numBuckets-1]++;
+        }
+    }
+
+    for (uint64_t k = lowerbound; k < upperbound; k += step) {
+        printf("%lu-%lu: %lu\n", k, k + step, buckets[(k - lowerbound) / step]);
+    }
+    printf("%lu+: %lu\n", upperbound, buckets[numBuckets -1]);
+    free(buckets);
+}

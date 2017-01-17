@@ -4,8 +4,9 @@
 #include <time.h>
 
 #include "PerfUtils/Cycles.h"
+#include "Stats.h"
 
-#define NUM_RUNS 10000
+#define NUM_RUNS 1000000
 
 using PerfUtils::Cycles;
 /**
@@ -39,17 +40,23 @@ int main(int argc, char** argv){
     }
 
 
-    uint8_t **cur = memory;
-    uint64_t startTime = Cycles::rdtsc();
-    for (int i = 0; i < NUM_RUNS; i++) {
-        cur = (uint8_t**) *cur;
-    }
-    uint64_t delta = Cycles::rdtsc() - startTime;
+    // Begin measurements
+    uint64_t deltas[NUM_RUNS];
+    uint64_t startTime;
+    uint64_t delta;
 
-    printf("Average cost of randomly accessing an array of size %lu bytes: "
-            "%lu ns\n", count*sizeof(uint8_t*),
-            Cycles::toNanoseconds(delta / NUM_RUNS));
+    uint8_t **cur = memory;
+    for (int i = 0; i < NUM_RUNS; i++) {
+        startTime = Cycles::rdtsc();
+        cur = (uint8_t**) *cur;
+        delta = Cycles::rdtsc() - startTime;
+        deltas[i] = delta;
+    }
     free(memory);
+    puts("Benchmark,Count,Avg,StdDev,Median,Min,Max");
+    printStatistics("Cache Statistics", deltas, NUM_RUNS, NULL);
+    printHistogram(deltas, NUM_RUNS, 0, 300, 10);
+
 
     // Force usage of output value so that compiler doesn't optimize away our
     // loop.
