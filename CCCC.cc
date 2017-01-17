@@ -10,6 +10,7 @@
 #include <sstream>
 #include "PerfUtils/Cycles.h"
 #include "PerfUtils/Util.h"
+#include "Stats.h"
 
 /**
  * This program attempts to measure unidirectional cross core communication
@@ -57,47 +58,6 @@ void send(uint64_t coreId, std::atomic<uint64_t>* timestamp) {
     for (int i = 0; i < NUM_RUNS + NUM_WARMUP; i++) {
         while (*timestamp != 0);
         *timestamp = Cycles::rdtsc();
-    }
-}
-
-int compare(const void * a, const void * b)
-{
-    if (*(uint64_t*)a == *(uint64_t*)b) return 0;
-    return  *(uint64_t*)a < *(uint64_t*)b ? -1 : 1;
-}
-
-void printStatistics(int sender, int receiver, uint64_t* rawdata,
-        const char* datadir) {
-    qsort(rawdata, NUM_RUNS, sizeof(uint64_t), compare);
-    uint64_t sum = 0;
-    for (int i = 0; i < NUM_RUNS; i++)
-        sum += rawdata[i];
-    uint64_t avg = sum / NUM_RUNS;
-
-    double stddev = 0;
-    for (size_t i=0; i<NUM_RUNS; i++) {
-        if (rawdata[i] > avg) {
-            stddev += (rawdata[i] - avg) * (rawdata[i] - avg);
-        } else {
-            stddev += (avg- rawdata[i]) * (avg - rawdata[i]);
-        }
-    }
-    stddev /= NUM_RUNS;
-    stddev = sqrt(stddev);
-
-    // count,avg,stddev,median,min,max
-    printf("%d,%d,", sender, receiver);
-    printf("%d,%lu,%f,%lu,%lu,%lu\n", NUM_RUNS, avg, stddev,
-            rawdata[NUM_RUNS / 2], rawdata[0],rawdata[NUM_RUNS-1]);
-
-    // Dump the data out
-    if (datadir != NULL) {
-        char buf[1024];
-        sprintf(buf, "%s/Core%d_to_Core%d",datadir, sender, receiver);
-        FILE* fp = fopen(buf, "w");
-        for (int i = 0; i < NUM_RUNS; i++)
-            fprintf(fp, "%lu\n", rawdata[i]);
-        fclose(fp);
     }
 }
 
@@ -163,7 +123,9 @@ int main(int argc, const char** argv){
             r.join();
             // Analyze data
             PerfUtils::Util::serialize();
-            printStatistics(cores[i], cores[k], rawdata, datadir);
+            char label[1024];
+            sprintf(label, "Core %d to Core %d", cores[i], cores[k]);
+            printStatistics(label, rawdata, NUM_RUNS, datadir);
             PerfUtils::Util::serialize();
         }
     }
