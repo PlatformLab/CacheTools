@@ -6,8 +6,8 @@ import sys
 
 
 def disable(coreId):
-    print "Disabling Core {}".format(coreId)
     os.system("/bin/echo 0 > /sys/devices/system/cpu/cpu{}/online".format(coreId))
+    print "Disabled Core {}.".format(coreId)
 
 def main():
     if not os.geteuid() == 0:
@@ -29,7 +29,7 @@ def main():
                     disable(hyperthreads[1].strip())
                     complete = False
                 elif ',' in siblings:
-                    hyperthreads = siblings.split("-")
+                    hyperthreads = siblings.split(",")
                     for h in hyperthreads[1:]:
                         disable(h.strip())
                     complete = False
