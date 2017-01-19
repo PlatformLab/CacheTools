@@ -82,14 +82,22 @@ int main(int argc, const char** argv){
     }
 
     std::vector<int> cores = PerfUtils::Util::parseRanges(argv[1]);
-    std::atomic<uint64_t> timestamp;
+    void* timestampHolder =
+        PerfUtils::Util::cacheAlignAlloc(sizeof(std::atomic<uint64_t>));;
+    if (timestampHolder == NULL) {
+        printf("Failed to obtain cache-aligned memory for timestamp\n");
+    }
+    new (timestampHolder) std::atomic<uint64_t>();
+    std::atomic<uint64_t>* timestamp =
+        reinterpret_cast< std::atomic<uint64_t>* >(timestampHolder);
+
     uint64_t* rawdata = (uint64_t*)malloc(NUM_RUNS*sizeof(uint64_t));
     for (int i = 0; i < cores.size(); i++) {
         for (int k = 0; k < cores.size(); k++) {
             if (cores[i] == cores[k]) continue;
-            timestamp = 1;
-            std::thread r(recv, cores[k], &timestamp, rawdata);
-            send(cores[i], &timestamp);
+            *timestamp = 1;
+            std::thread r(recv, cores[k], timestamp, rawdata);
+            send(cores[i], timestamp);
             r.join();
             // Analyze data
             PerfUtils::Util::serialize();
@@ -100,4 +108,5 @@ int main(int argc, const char** argv){
         }
     }
     free(rawdata);
+    free(timestampHolder);
 }
