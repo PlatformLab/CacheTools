@@ -61,36 +61,6 @@ void send(uint64_t coreId, std::atomic<uint64_t>* timestamp) {
     }
 }
 
-void split(const std::string &s, char delim, std::vector<std::string> &elems) {
-    std::stringstream ss;
-    ss.str(s);
-    std::string item;
-    while (std::getline(ss, item, delim)) {
-        elems.push_back(item);
-    }
-}
-std::vector<std::string> split(const std::string &s, char delim) {
-    std::vector<std::string> elems;
-    split(s, delim, elems);
-    return elems;
-}
-
-std::vector<int> parseCores(const char* coreDesc) {
-    std::vector<int> cores;
-    std::vector<std::string> ranges = split(coreDesc, ',');
-    for (int i = 0; i < ranges.size(); i++) {
-        if (ranges[i].find("-") == std::string::npos)
-            cores.push_back(atoi(ranges[i].c_str()));
-        else {
-            auto bounds = split(ranges[i], '-');
-            for (int k = atoi(bounds[0].c_str()); k <= atoi(bounds[1].c_str());
-                    k++)
-                cores.push_back(k);
-        }
-    }
-    return cores;
-}
-
 void ensureDirectory(const char* dir) {
     struct stat st = {0};
 
@@ -111,7 +81,7 @@ int main(int argc, const char** argv){
         ensureDirectory(datadir);
     }
 
-    std::vector<int> cores = parseCores(argv[1]);
+    std::vector<int> cores = PerfUtils::Util::parseRanges(argv[1]);
     std::atomic<uint64_t> timestamp;
     uint64_t* rawdata = (uint64_t*)malloc(NUM_RUNS*sizeof(uint64_t));
     for (int i = 0; i < cores.size(); i++) {
