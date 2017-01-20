@@ -36,7 +36,7 @@
 
 using PerfUtils::Cycles;
 
-void recv(uint64_t coreId, volatile uint64_t* timestamp,
+void recv(uint64_t coreId, std::atomic<uint64_t>* timestamp,
         uint64_t *cycleDifferences){
     PerfUtils::Util::pinThreadToCore(coreId);
     uint64_t endTime;
@@ -53,7 +53,7 @@ void recv(uint64_t coreId, volatile uint64_t* timestamp,
     }
 }
 
-void send(uint64_t coreId,volatile uint64_t * timestamp) {
+void send(uint64_t coreId, std::atomic<uint64_t>* timestamp) {
     PerfUtils::Util::pinThreadToCore(coreId);
     for (int i = 0; i < NUM_RUNS + NUM_WARMUP; i++) {
         while (*timestamp != 0);
@@ -83,12 +83,13 @@ int main(int argc, const char** argv){
 
     std::vector<int> cores = PerfUtils::Util::parseRanges(argv[1]);
     void* timestampHolder =
-        PerfUtils::Util::cacheAlignAlloc(sizeof(uint64_t));
+        PerfUtils::Util::cacheAlignAlloc(sizeof(std::atomic<uint64_t>));;
     if (timestampHolder == NULL) {
         printf("Failed to obtain cache-aligned memory for timestamp\n");
     }
-    volatile uint64_t* timestamp =
-        reinterpret_cast< volatile uint64_t*  >(timestampHolder);
+    new (timestampHolder) std::atomic<uint64_t>();
+    std::atomic<uint64_t>* timestamp =
+        reinterpret_cast< std::atomic<uint64_t>* >(timestampHolder);
 
     uint64_t* rawdata = (uint64_t*)malloc(NUM_RUNS*sizeof(uint64_t));
     for (int i = 0; i < cores.size(); i++) {
