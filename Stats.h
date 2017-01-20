@@ -15,24 +15,12 @@ void printStatistics(const char* label, uint64_t* rawdata, size_t count,
         sum += rawdata[i];
     uint64_t avg = sum / count;
 
-    double stddev = 0;
-    for (size_t i=0; i<count; i++) {
-        if (rawdata[i] > avg) {
-            stddev += (rawdata[i] - avg) * (rawdata[i] - avg);
-        } else {
-            stddev += (avg- rawdata[i]) * (avg - rawdata[i]);
-        }
-    }
-    stddev /= count;
-    stddev = sqrt(stddev);
-
-    // count,avg,stddev,median,min,max
     if (!headerPrinted) {
-        puts("Benchmark,Count,Avg,StdDev,Median,Min,Max,99th Percentile,"
+        puts("Benchmark,Count,Avg,Median,Min,Max,99th Percentile,"
                 "99.9th Percentile");
         headerPrinted = true;
     }
-    printf("%s,%zu,%lu,%f,%lu,%lu,%lu,%lu,%lu\n", label, count, avg, stddev,
+    printf("%s,%zu,%lu,%lu,%lu,%lu,%lu,%lu\n", label, count, avg,
             rawdata[count / 2], rawdata[0],rawdata[count-1],
             rawdata[(int)(count*0.99)], rawdata[(int)(count*0.999)]);
 
@@ -47,7 +35,8 @@ void printStatistics(const char* label, uint64_t* rawdata, size_t count,
     }
 }
 
-void printHistogram(uint64_t* rawdata, size_t count, uint64_t lowerbound, uint64_t upperbound, uint64_t step) {
+void printHistogram(uint64_t* rawdata, size_t count, uint64_t lowerbound,
+        uint64_t upperbound, uint64_t step) {
     size_t numBuckets = (upperbound - lowerbound) / step + 1;
     uint64_t *buckets = (uint64_t *) calloc(numBuckets, sizeof(uint64_t));
     for (int i = 0; i < count; i++) {
