@@ -16,13 +16,14 @@ void printStatistics(const char* label, uint64_t* rawdata, size_t count,
     uint64_t avg = sum / count;
 
     if (!headerPrinted) {
-        puts("Benchmark,Count,Avg,Median,Min,Max,99th Percentile,"
-                "99.9th Percentile");
+        puts("Benchmark,Count,Avg,Median,Min,99%,"
+                "99.9%,99.99%,Max");
         headerPrinted = true;
     }
-    printf("%s,%zu,%lu,%lu,%lu,%lu,%lu,%lu\n", label, count, avg,
-            rawdata[count / 2], rawdata[0],rawdata[count-1],
-            rawdata[(int)(count*0.99)], rawdata[(int)(count*0.999)]);
+    printf("%s,%zu,%lu,%lu,%lu,%lu,%lu,%lu,%lu\n", label, count, avg,
+            rawdata[count / 2], rawdata[0], rawdata[(int)(count*0.99)],
+            rawdata[(int)(count*0.999)],rawdata[(int)(count*0.9999)],
+            rawdata[count-1]);
 
     // Dump the data out
     if (datadir != NULL) {
