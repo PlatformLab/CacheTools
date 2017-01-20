@@ -28,11 +28,13 @@ void printStatistics(const char* label, uint64_t* rawdata, size_t count,
 
     // count,avg,stddev,median,min,max
     if (!headerPrinted) {
-        puts("Benchmark,Count,Avg,StdDev,Median,Min,Max");
+        puts("Benchmark,Count,Avg,StdDev,Median,Min,Max,99th Percentile,"
+                "99.9th Percentile");
         headerPrinted = true;
     }
-    printf("%s,%zu,%lu,%f,%lu,%lu,%lu\n", label, count, avg, stddev,
-            rawdata[count / 2], rawdata[0],rawdata[count-1]);
+    printf("%s,%zu,%lu,%f,%lu,%lu,%lu,%lu,%lu\n", label, count, avg, stddev,
+            rawdata[count / 2], rawdata[0],rawdata[count-1],
+            rawdata[(int)(count*0.99)], rawdata[(int)(count*0.999)]);
 
     // Dump the data out
     if (datadir != NULL) {
