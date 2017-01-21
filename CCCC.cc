@@ -1,3 +1,4 @@
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -32,7 +33,9 @@
  */
 
 #define NUM_WARMUP 10000
+
 #define NUM_RUNS 3000000
+#define NUM_COUNTS NUM_RUNS
 
 using PerfUtils::Cycles;
 
@@ -49,7 +52,11 @@ void recv(uint64_t coreId, std::atomic<uint64_t>* timestamp,
         *timestamp = 0;
         while (*timestamp == 0);
         endTime = Cycles::rdtsc();
-        cycleDifferences[i] = endTime - *timestamp;
+        uint64_t timeDiff = endTime - *timestamp;
+        if (timeDiff < NUM_COUNTS - 1)
+            cycleDifferences[timeDiff]++;
+        else
+            cycleDifferences[NUM_COUNTS - 1]++;
     }
 }
 
@@ -67,6 +74,14 @@ void ensureDirectory(const char* dir) {
     if (stat(dir, &st) == -1) {
         mkdir(dir, 0700);
     }
+}
+
+void translateData(uint64_t* countArray, uint64_t* rawdata) {
+    int k = 0;
+    for (int i = 0; i < NUM_COUNTS; i++)
+        for (int j = 0; j < countArray[i]; j++)
+            rawdata[k++] = i;
+    assert(k == NUM_RUNS);
 }
 
 int main(int argc, const char** argv){
@@ -92,15 +107,18 @@ int main(int argc, const char** argv){
         reinterpret_cast< std::atomic<uint64_t>* >(timestampHolder);
 
     uint64_t* rawdata = (uint64_t*)malloc(NUM_RUNS*sizeof(uint64_t));
+    uint64_t* countArray = (uint64_t*)malloc(NUM_COUNTS*sizeof(uint64_t));
     for (int i = 0; i < cores.size(); i++) {
         for (int k = 0; k < cores.size(); k++) {
             if (cores[i] == cores[k]) continue;
+            memset(countArray, 0, NUM_COUNTS * sizeof(uint64_t));
             *timestamp = 1;
-            std::thread r(recv, cores[k], timestamp, rawdata);
+            std::thread r(recv, cores[k], timestamp, countArray);
             send(cores[i], timestamp);
             r.join();
             // Analyze data
             PerfUtils::Util::serialize();
+            translateData(countArray, rawdata);
             char label[1024];
             sprintf(label, "Core %d to Core %d", cores[i], cores[k]);
             // Translate cycles to nanoseconds
@@ -111,5 +129,6 @@ int main(int argc, const char** argv){
         }
     }
     free(rawdata);
+    free(countArray);
     free(timestampHolder);
 }
