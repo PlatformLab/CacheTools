@@ -103,6 +103,9 @@ int main(int argc, const char** argv){
             PerfUtils::Util::serialize();
             char label[1024];
             sprintf(label, "Core %d to Core %d", cores[i], cores[k]);
+            // Translate cycles to nanoseconds
+            for (int i = 0; i < NUM_RUNS; i++)
+                rawdata[i] = Cycles::toNanoseconds(rawdata[i]);
             printStatistics(label, rawdata, NUM_RUNS, datadir);
             PerfUtils::Util::serialize();
         }
