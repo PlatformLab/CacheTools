@@ -1,10 +1,10 @@
-all: CCCC CMC
+all: CrossCoreCommunicationCost CacheMissCostEstimator
 
-CCCC: CCCC.cc Stats.h
+CrossCoreCommunicationCost: CrossCoreCommunicationCost.cc Stats.h
 	g++ -std=c++11 -g -O3 -o $@ $<  PerfUtils/libPerfUtils.a -pthread
 
-CMC: CMC.cc Stats.h
+CacheMissCostEstimator: CacheMissCostEstimator.cc Stats.h
 	g++ -std=c++11 -g -O3 -o $@ $<  PerfUtils/libPerfUtils.a -pthread
 
 clean:
-	rm -f CCCC CMC
+	rm -f CrossCoreCommunicationCost CacheMissCostEstimator
