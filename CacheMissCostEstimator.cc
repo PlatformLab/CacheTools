@@ -21,7 +21,7 @@
 #include <time.h>
 
 #include "PerfUtils/Cycles.h"
-#include "Stats.h"
+#include "PerfUtils/Stats.h"
 
 #define NUM_RUNS 3000000
 

@@ -26,7 +26,7 @@
 #include <sstream>
 #include "PerfUtils/Cycles.h"
 #include "PerfUtils/Util.h"
-#include "Stats.h"
+#include "PerfUtils/Stats.h"
 
 /**
  * This program attempts to measure unidirectional cross core communication
@@ -93,8 +93,8 @@ void ensureDirectory(const char* dir) {
 
 void translateData(uint64_t* countArray, uint64_t* rawdata) {
     int k = 0;
-    for (int i = 0; i < NUM_COUNTS; i++)
-        for (int j = 0; j < countArray[i]; j++)
+    for (uint64_t i = 0; i < NUM_COUNTS; i++)
+        for (uint64_t j = 0; j < countArray[i]; j++)
             rawdata[k++] = i;
     assert(k == NUM_RUNS);
 }
@@ -123,8 +123,8 @@ int main(int argc, const char** argv){
 
     uint64_t* rawdata = (uint64_t*)malloc(NUM_RUNS*sizeof(uint64_t));
     uint64_t* countArray = (uint64_t*)malloc(NUM_COUNTS*sizeof(uint64_t));
-    for (int i = 0; i < cores.size(); i++) {
-        for (int k = 0; k < cores.size(); k++) {
+    for (size_t i = 0; i < cores.size(); i++) {
+        for (size_t k = 0; k < cores.size(); k++) {
             if (cores[i] == cores[k]) continue;
             memset(countArray, 0, NUM_COUNTS * sizeof(uint64_t));
             *timestamp = 1;
