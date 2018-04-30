@@ -11,10 +11,10 @@ LIBS= -I$(PERFUTILS)/include $(PERFUTILS)/lib/libPerfUtils.a  -pthread
 
 all: CrossCoreCommunicationCost CacheMissCostEstimator
 
-CrossCoreCommunicationCost: CrossCoreCommunicationCost.cc Stats.h
+CrossCoreCommunicationCost: CrossCoreCommunicationCost.cc
 	g++ $(CXXFLAGS) -o $@ $< $(LIBS)
 
-CacheMissCostEstimator: CacheMissCostEstimator.cc Stats.h
+CacheMissCostEstimator: CacheMissCostEstimator.cc
 	g++ $(CXXFLAGS) -o $@ $< $(LIBS)
 
 clean:
