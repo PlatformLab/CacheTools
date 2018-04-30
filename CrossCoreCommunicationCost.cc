@@ -28,6 +28,7 @@
 #include "PerfUtils/Util.h"
 #include "PerfUtils/Stats.h"
 
+#define USE_CAS 0
 /**
  * This program attempts to measure unidirectional cross core communication
  * cost (CCCC) for all pairs of cores passed on the command line.
@@ -79,7 +80,12 @@ void send(uint64_t coreId, std::atomic<uint64_t>* timestamp) {
     PerfUtils::Util::pinThreadToCore(coreId);
     for (int i = 0; i < NUM_RUNS + NUM_WARMUP; i++) {
         while (*timestamp != 0);
+#if USE_CAS
+        uint64_t oldValue = 0L;
+		timestamp->compare_exchange_strong(oldValue, Cycles::rdtsc());
+#else
         *timestamp = Cycles::rdtsc();
+#endif
     }
 }
 
